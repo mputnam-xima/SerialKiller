@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.nibblesec</groupId>
-    <artifactId>serialkiller</artifactId>
-    <version>0.5</version>
+    <artifactId>serialkiller-xima</artifactId>
+    <version>0.6</version>
     <packaging>jar</packaging>
 
     <name>serialkiller</name>
