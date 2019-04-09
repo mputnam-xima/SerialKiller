@@ -54,8 +54,9 @@ public class SerialKillerSpeedTest {
     class TestDeserializeSerialKiller implements TestDeserialize{
 
         public void deserialize(InputStream is) throws IOException, ClassNotFoundException, ConfigurationException {
-            ObjectInputStream ois = new SerialKiller(is, "src/test/resources/serialkiller-speedtest.conf");
+            ObjectInputStream ois = new SerialKiller(is, "src/test/resources/serialkiller-speedtest.conf", new ApacheSerialKillerLogFactoryProvider());
             Person inPersonSerial = (Person) ois.readObject();
+            ois.close();
         }
     }
 }

@@ -21,11 +21,9 @@ import java.io.InputStream;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
-import java.util.Map;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,17 +32,14 @@ import java.util.regex.PatternSyntaxException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public class SerialKiller extends ObjectInputStream {
-
-    private static final Log LOGGER = LogFactory.getLog(SerialKiller.class.getName());
 
     private static final Map<String, Configuration> configs = new ConcurrentHashMap<>();
 
     private final Configuration config;
     private final boolean profiling;
+    private final LoggingProvider loggingProvider;
 
     /**
      * SerialKiller constructor, returns instance of ObjectInputStream.
@@ -54,11 +49,12 @@ public class SerialKiller extends ObjectInputStream {
      * @throws java.io.IOException File I/O exception
      * @throws IllegalStateException Invalid configuration exception
      */
-    public SerialKiller(final InputStream inputStream, final String configFile) throws IOException {
+    public SerialKiller(final InputStream inputStream, final String configFile, LoggingProvider loggingProvider) throws IOException {
         super(inputStream);
 
-        config = configs.computeIfAbsent(configFile, Configuration::new);
-        profiling = config.isProfiling();
+        this.config = configs.computeIfAbsent(configFile, Configuration::new);
+        this.profiling = config.isProfiling();
+        this.loggingProvider = loggingProvider;
     }
 
     @Override
@@ -72,10 +68,10 @@ public class SerialKiller extends ObjectInputStream {
             if (blackMatcher.find()) {
                 if (profiling) {
                     // Reporting mode
-                    LOGGER.info(String.format("Blacklist match: '%s'", serialInput.getName()));
+                	loggingProvider.logInfo(String.format("Blacklist match: '%s'", serialInput.getName()));
                 } else {
                     // Blocking mode
-                    LOGGER.error(String.format("Blocked by blacklist '%s'. Match found for '%s'", new Object[] {blackPattern.pattern(), serialInput.getName()}));
+                	loggingProvider.logError(String.format("Blocked by blacklist '%s'. Match found for '%s'", new Object[] {blackPattern.pattern(), serialInput.getName()}));
                     throw new InvalidClassException(serialInput.getName(), "Class blocked from deserialization (blacklist)");
                 }
             }
@@ -92,7 +88,7 @@ public class SerialKiller extends ObjectInputStream {
 
                 if (profiling) {
                     // Reporting mode
-                    LOGGER.info(String.format("Whitelist match: '%s'", serialInput.getName()));
+                	loggingProvider.logInfo(String.format("Whitelist match: '%s'", serialInput.getName()));
                 }
 
                 // We have found a whitelist match, no need to continue
@@ -102,7 +98,7 @@ public class SerialKiller extends ObjectInputStream {
 
         if (!safeClass && !profiling) {
             // Blocking mode
-            LOGGER.error(String.format("Blocked by whitelist. No match found for '%s'", serialInput.getName()));
+        	loggingProvider.logError(String.format("Blocked by whitelist. No match found for '%s'", serialInput.getName()));
             throw new InvalidClassException(serialInput.getName(), "Class blocked from deserialization (non-whitelist)");
         }
 
