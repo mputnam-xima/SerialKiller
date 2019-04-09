@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.junit.Test;
-import org.nibblesec.tools.SerialKiller.PatternList;
 
 /**
  * PatternListTest

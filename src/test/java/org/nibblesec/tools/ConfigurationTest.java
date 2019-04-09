@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 
 import org.junit.Test;
-import org.nibblesec.tools.SerialKiller.Configuration;
 
 /**
  * ConfigurationTest
@@ -19,28 +18,28 @@ import org.nibblesec.tools.SerialKiller.Configuration;
 public class ConfigurationTest {
     @Test(expected = IllegalStateException.class)
     public void testCreateNull() {
-        new Configuration(null);
+        new FileConfiguration(null);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testCreateNonExistant() {
-        new Configuration("/i/am/pretty-sure/this-file/does-not-exist");
+        new FileConfiguration("/i/am/pretty-sure/this-file/does-not-exist");
     }
 
     @Test(expected = IllegalStateException.class)
     public void testCreateNonConfig() throws IOException {
         Path tempFile = Files.createTempFile("sk-", ".tmp");
-        new Configuration(tempFile.toAbsolutePath().toString());
+        new FileConfiguration(tempFile.toAbsolutePath().toString());
     }
 
     @Test(expected = IllegalStateException.class)
     public void testCreateBadPattern() {
-        new Configuration("src/test/resources/broken-pattern.conf");
+        new FileConfiguration("src/test/resources/broken-pattern.conf");
     }
 
     @Test
     public void testCreateGood() {
-        Configuration configuration = new Configuration("src/test/resources/blacklist-all.conf");
+        FileConfiguration configuration = new FileConfiguration("src/test/resources/blacklist-all.conf");
 
         assertFalse(configuration.isProfiling());
         //@TODO after fixing loggging
@@ -54,7 +53,7 @@ public class ConfigurationTest {
         Path tempFile = Files.createTempFile("sk-", ".conf");
         Files.copy(new File("src/test/resources/blacklist-all-refresh-10-ms.conf").toPath(), tempFile, REPLACE_EXISTING);
 
-        Configuration configuration = new Configuration(tempFile.toAbsolutePath().toString());
+        FileConfiguration configuration = new FileConfiguration(tempFile.toAbsolutePath().toString());
 
         assertFalse(configuration.isProfiling());
         assertEquals(".*", configuration.blacklist().iterator().next().pattern());

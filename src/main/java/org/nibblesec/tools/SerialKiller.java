@@ -14,45 +14,31 @@
  */
 package org.nibblesec.tools;
 
-import static java.util.Objects.requireNonNull;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.XMLConfiguration;
-import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 
 public class SerialKiller extends ObjectInputStream {
 
-    private static final Map<String, Configuration> configs = new ConcurrentHashMap<>();
+    private static final Map<String, FileConfiguration> configs = new ConcurrentHashMap<>();
 
     private final Configuration config;
     private final boolean profiling;
     private final LoggingProvider loggingProvider;
 
-    /**
-     * SerialKiller constructor, returns instance of ObjectInputStream.
-     *
-     * @param inputStream The original InputStream, used by your service to receive serialized objects
-     * @param configFile The location of the config file (absolute path)
-     * @throws java.io.IOException File I/O exception
-     * @throws IllegalStateException Invalid configuration exception
-     */
     public SerialKiller(final InputStream inputStream, final String configFile, LoggingProvider loggingProvider) throws IOException {
-        super(inputStream);
+        this(inputStream, configs.computeIfAbsent(configFile, FileConfiguration::new), loggingProvider);
+    }
 
-        this.config = configs.computeIfAbsent(configFile, Configuration::new);
+    public SerialKiller(final InputStream inputStream, final Configuration config, LoggingProvider loggingProvider) throws IOException {
+    	super(inputStream);
+    	this.config = config;
         this.profiling = config.isProfiling();
         this.loggingProvider = loggingProvider;
     }
@@ -103,91 +89,5 @@ public class SerialKiller extends ObjectInputStream {
         }
 
         return super.resolveClass(serialInput);
-    }
-
-    static final class Configuration {
-        private final XMLConfiguration config;
-
-        private PatternList blacklist;
-        private PatternList whitelist;
-
-        Configuration(final String configPath) {
-            try {
-                config = new XMLConfiguration(configPath);
-
-                FileChangedReloadingStrategy reloadStrategy = new FileChangedReloadingStrategy();
-                reloadStrategy.setRefreshDelay(config.getLong("refresh", 6000));
-                config.setReloadingStrategy(reloadStrategy);
-                config.addConfigurationListener(event -> init(config));
-
-                init(config);
-            } catch (ConfigurationException | PatternSyntaxException e) {
-                throw new IllegalStateException("SerialKiller not properly configured: " + e.getMessage(), e);
-            }
-        }
-
-        private void init(final XMLConfiguration config) {
-            blacklist = new PatternList(config.getStringArray("blacklist.regexps.regexp"));
-            whitelist = new PatternList(config.getStringArray("whitelist.regexps.regexp"));
-        }
-
-        void reloadIfNeeded() {
-            // NOTE: Unfortunately, this will invoke synchronized blocks in Commons Configuration
-            config.reload();
-        }
-
-        Iterable<Pattern> blacklist() {
-            return blacklist;
-        }
-
-        Iterable<Pattern> whitelist() {
-            return whitelist;
-        }
-
-        boolean isProfiling() {
-            return config.getBoolean("mode.profiling", false);
-        }
-    }
-
-    static final class PatternList implements Iterable<Pattern> {
-        private final Pattern[] patterns;
-
-        PatternList(final String... regExps) {
-
-            requireNonNull(regExps, "regExps");
-
-            this.patterns = new Pattern[regExps.length];
-            for (int i = 0; i < regExps.length; i++) {
-                patterns[i] = Pattern.compile(regExps[i]);
-            }
-        }
-
-        @Override
-        public Iterator<Pattern> iterator() {
-            return new Iterator<Pattern>() {
-                int index = 0;
-
-                @Override
-                public boolean hasNext() {
-                    return index < patterns.length;
-                }
-
-                @Override
-                public Pattern next() {
-                    return patterns[index++];
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException("remove");
-                }
-            };
-        }
-
-        @Override
-        public String toString() {
-            return Arrays.toString(patterns);
-        }
-
     }
 }
