@@ -82,10 +82,14 @@ public class SerialKiller extends ObjectInputStream {
             }
         }
 
-        if (!safeClass && !profiling) {
-            // Blocking mode
-        	loggingProvider.logError(String.format("Blocked by whitelist. No match found for '%s'", serialInput.getName()));
-            throw new InvalidClassException(serialInput.getName(), "Class blocked from deserialization (non-whitelist)");
+        if (!safeClass) {
+        	if (profiling) {
+        		loggingProvider.logError(String.format("Class would have been blocked by whitelist. No match found for '%s'", serialInput.getName()));
+        	} else {
+        		// Blocking mode
+        		loggingProvider.logError(String.format("Blocked by whitelist. No match found for '%s'", serialInput.getName()));
+        		throw new InvalidClassException(serialInput.getName(), "Class blocked from deserialization (non-whitelist)");
+        	}
         }
 
         return super.resolveClass(serialInput);
