@@ -2,6 +2,10 @@
 
 **SerialKiller** is an easy-to-use look-ahead Java deserialization library to secure application from untrusted input.
 
+**Changes in this fork:**
+* Logging is now extracted to an interface, so you can now log through your preferred method
+* Config is now extracted to an interface, so you don't have to create a config file. You can create the config in memory
+
 When Java serialization is used to exchange information between a client and a server, attackers can replace the legitimate serialized stream with malicious data. Inspired by this [article](http://www.ibm.com/developerworks/library/se-lookahead/), SerialKiller inspects Java classes during naming resolution and allows a combination of blacklisting/whitelisting to secure your application.
 
 ![SerialKiller in action](http://i.imgur.com/wgoF62D.png "SerialKiller in action")
