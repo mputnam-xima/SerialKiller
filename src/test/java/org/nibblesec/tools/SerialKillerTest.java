@@ -26,7 +26,7 @@ import org.junit.Test;
 public class SerialKillerTest {
     @Test
     public void testBlacklisted() throws Exception {
-        try (ObjectInputStream stream = new SerialKiller(getClass().getResourceAsStream("/hibernate1.ser"), "src/test/resources/serialkiller.conf")) {
+        try (ObjectInputStream stream = new SerialKiller(getClass().getResourceAsStream("/hibernate1.ser"), "src/test/resources/serialkiller.conf", new ApacheSerialKillerLogFactoryProvider())) {
             try {
                 stream.readObject();
                 fail();
@@ -49,7 +49,7 @@ public class SerialKillerTest {
             stream.writeObject(new java.sql.Date(42L));
         }
 
-        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/serialkiller.conf")) {
+        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/serialkiller.conf", new ApacheSerialKillerLogFactoryProvider())) {
             try {
                 stream.readObject();
                 fail();
@@ -75,7 +75,7 @@ public class SerialKillerTest {
             stream.writeObject(42);
         }
 
-        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/serialkiller.conf")) {
+        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/serialkiller.conf", new ApacheSerialKillerLogFactoryProvider())) {
             assertEquals(s, stream.readObject());
             assertEquals(42, stream.readObject());
         }
@@ -89,9 +89,9 @@ public class SerialKillerTest {
             stream.writeObject(42);
         }
 
-        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/blacklist-all.conf")) {
+        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/blacklist-all.conf", new ApacheSerialKillerLogFactoryProvider())) {
             // Create a dummy SK with different config
-            new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/whitelist-all.conf");
+            new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), "src/test/resources/whitelist-all.conf", new ApacheSerialKillerLogFactoryProvider());
 
             stream.readObject();
             fail("All should be blacklisted");
@@ -109,7 +109,7 @@ public class SerialKillerTest {
             stream.writeObject(42);
         }
 
-        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), tempFile.toAbsolutePath().toString())) {
+        try (ObjectInputStream stream = new SerialKiller(new ByteArrayInputStream(bytes.toByteArray()), tempFile.toAbsolutePath().toString(), new ApacheSerialKillerLogFactoryProvider())) {
 
             Files.copy(new File("src/test/resources/whitelist-all.conf").toPath(), tempFile, REPLACE_EXISTING);
             Thread.sleep(1000L); // Wait to ensure the file is fully copied
